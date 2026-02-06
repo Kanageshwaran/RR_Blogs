@@ -21,6 +21,18 @@ document.getElementById("shareBtn").addEventListener("click", async () => {
   }
 });
 
+function sanitizeForDisplay(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script,style,iframe,object,embed").forEach(n => n.remove());
+  doc.querySelectorAll("*").forEach(el => {
+    [...el.attributes].forEach(a => {
+      const n = a.name.toLowerCase();
+      if (n.startsWith("on")) el.removeAttribute(a.name);
+    });
+  });
+  return doc.body.innerHTML;
+}
+
 async function loadPost() {
   postEl.innerHTML = `<div class="card">Loading…</div>`;
 
@@ -42,13 +54,15 @@ async function loadPost() {
     ? `<div class="imgwrap" data-thumb="${data.image_thumb_path}" data-full="${data.image_full_path}" data-alt="${escapeHtml(data.title)}"></div><div style="height:12px"></div>`
     : "";
 
+  const safeBody = sanitizeForDisplay(data.body || "");
+
   postEl.innerHTML = `
     <div class="card">
       <div class="meta">${author} • ${created}</div>
       <h1 class="title">${escapeHtml(data.title)}</h1>
       ${imgBlock}
       <div class="user-post" data-color="${data.font_color}">
-        ${escapeHtml(data.body).replaceAll("\n","<br/>")}
+        ${safeBody}
       </div>
     </div>
   `;

@@ -2,8 +2,24 @@ import { supabase } from "./supabaseClient.js";
 import { requireAdmin } from "./auth.js";
 
 const allPosts = document.getElementById("allPosts");
+const adminMsg = document.getElementById("adminMsg");
+
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;").replaceAll("<","&lt;")
+    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function statusBadge(isPublished) {
+  const label = isPublished ? "published" : "unpublished";
+  const color = isPublished ? "black" : "red";
+  return `<span class="meta" style="border:1px solid var(--border); padding:4px 8px; border-radius:999px; color:${color};">${label}</span>`;
+}
 
 async function load() {
+  adminMsg.textContent = "";
+
   const admin = await requireAdmin();
   if (!admin) return;
 
@@ -16,47 +32,91 @@ async function load() {
     .limit(50);
 
   if (error) {
-    allPosts.innerHTML = `<div class="card">Failed.</div>`;
+    adminMsg.textContent = error.message;
+    allPosts.innerHTML = `<div class="card">Failed to load posts.</div>`;
     return;
   }
 
-  allPosts.innerHTML = data.map(p => `
-    <div class="card">
-      <div class="meta">${p.profiles?.email || "user"} • ${new Date(p.created_at).toLocaleString()}</div>
-      <div class="title" style="font-size:18px;">${escapeHtml(p.title)}</div>
-      <div style="display:flex; gap:10px; margin-top:10px;">
-        <button class="btn" data-toggle="${p.id}">
-          ${p.is_published ? "Unpublish" : "Publish"}
-        </button>
-        <button class="btn" data-del="${p.id}">Delete</button>
+  if (!data || data.length === 0) {
+    allPosts.innerHTML = `<div class="card">No posts found.</div>`;
+    return;
+  }
+
+  adminMsg.textContent = `Loaded ${data.length} posts.`;
+
+  allPosts.innerHTML = data.map(p => {
+    const email = p.profiles?.email || "user";
+    const created = new Date(p.created_at).toLocaleString();
+    const badge = statusBadge(p.is_published);
+
+    return `
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+          <div>
+            <div class="meta">${escapeHtml(email)} • ${created}</div>
+            <div class="title" style="font-size:18px; margin-top:6px;">
+              <a href="/post.html?id=${p.id}">${escapeHtml(p.title)}</a>
+            </div>
+          </div>
+          <div>${badge}</div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+          <button class="btn" data-toggle="${p.id}">
+            ${p.is_published ? "Unpublish" : "Publish"}
+          </button>
+          <button class="btn" data-del="${p.id}">Delete</button>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   document.querySelectorAll("[data-toggle]").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const id = Number(btn.getAttribute("data-toggle"));
-      const row = data.find(x => x.id === id);
-      const { error } = await supabase.from("posts").update({ is_published: !row.is_published }).eq("id", id);
-      if (!error) load();
+      const postId = Number(btn.getAttribute("data-toggle"));
+      const row = data.find(x => x.id === postId);
+      if (!row) return;
+
+      btn.disabled = true;
+
+      const { error } = await supabase
+        .from("posts")
+        .update({ is_published: !row.is_published })
+        .eq("id", postId);
+
+      btn.disabled = false;
+
+      if (error) {
+        adminMsg.textContent = error.message;
+        return;
+      }
+
+      load();
     });
   });
 
   document.querySelectorAll("[data-del]").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const id = Number(btn.getAttribute("data-del"));
+      const postId = Number(btn.getAttribute("data-del"));
       if (!confirm("Delete this post?")) return;
-      const { error } = await supabase.from("posts").delete().eq("id", id);
-      if (!error) load();
+
+      btn.disabled = true;
+
+      const { error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", postId);
+
+      btn.disabled = false;
+
+      if (error) {
+        adminMsg.textContent = error.message;
+        return;
+      }
+
+      load();
     });
   });
-}
-
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;").replaceAll("<","&lt;")
-    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
 }
 
 load();

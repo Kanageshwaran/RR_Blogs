@@ -1,22 +1,10 @@
 import { supabase } from "./supabaseClient.js";
-import { requireAuth, getMyProfile, signOut } from "./auth.js";
+import { requireAuth, getMyProfile } from "./auth.js";
+import { wireEditor, getEditorHtml } from "./editor.js";
 
 const who = document.getElementById("who");
 const myPosts = document.getElementById("myPosts");
 const msg = document.getElementById("msg");
-
-document.getElementById("logoutBtn").addEventListener("click", signOut);
-
-async function load() {
-  const session = await requireAuth();
-  if (!session) return;
-
-  const profile = await getMyProfile();
-  who.textContent = profile ? `Signed in as ${profile.email}` : "Signed in";
-  if (profile?.role === "admin") document.getElementById("adminLink").style.display = "inline";
-
-  await loadMyPosts(session.user.id);
-}
 
 async function loadMyPosts(uid) {
   myPosts.innerHTML = `<div class="card">Loading…</div>`;
@@ -42,41 +30,6 @@ async function loadMyPosts(uid) {
   `).join("") || `<div class="card">No posts yet.</div>`;
 }
 
-document.getElementById("publishBtn").addEventListener("click", async () => {
-  msg.textContent = "Publishing…";
-
-  const session = await requireAuth();
-  if (!session) return;
-
-  const title = document.getElementById("title").value.trim();
-  const body = document.getElementById("body").value.trim();
-  const color = document.getElementById("color").value;
-
-  if (!title || !body) {
-    msg.textContent = "Title and body required.";
-    return;
-  }
-
-  const { error } = await supabase.from("posts").insert({
-    author_id: session.user.id,
-    title,
-    body,
-    font_color: color,
-    font_family: "Raleway",
-    is_published: true
-  });
-
-  if (error) {
-    msg.textContent = error.message;
-    return;
-  }
-
-  msg.textContent = "Published.";
-  document.getElementById("title").value = "";
-  document.getElementById("body").value = "";
-  await loadMyPosts(session.user.id);
-});
-
 function escapeHtml(s){
   return String(s)
     .replaceAll("&","&amp;").replaceAll("<","&lt;")
@@ -84,4 +37,50 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-load();
+async function init() {
+  const session = await requireAuth();
+  if (!session) return;
+
+  wireEditor();
+
+  const profile = await getMyProfile();
+  who.textContent = profile ? `Signed in as ${profile.email}` : "Signed in";
+
+  await loadMyPosts(session.user.id);
+
+  document.getElementById("publishBtn").addEventListener("click", async () => {
+    msg.textContent = "Publishing…";
+
+    const title = document.getElementById("title").value.trim();
+    const bodyHtml = getEditorHtml();
+
+    if (!title) {
+      msg.textContent = "Title required.";
+      return;
+    }
+    if (!bodyHtml) {
+      msg.textContent = "Post content required.";
+      return;
+    }
+
+    const { error } = await supabase.from("posts").insert({
+      author_id: session.user.id,
+      title,
+      body: bodyHtml,
+      is_published: true
+    });
+
+    if (error) {
+      msg.textContent = error.message;
+      return;
+    }
+
+    msg.textContent = "Published.";
+    document.getElementById("title").value = "";
+    document.getElementById("editor").innerHTML = "";
+
+    await loadMyPosts(session.user.id);
+  });
+}
+
+init();

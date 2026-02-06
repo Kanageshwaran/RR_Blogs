@@ -29,7 +29,7 @@ document.getElementById("signupBtn").addEventListener("click", async () => {
     email: email.value.trim(),
     password: password.value,
     options: {
-      emailRedirectTo: window.location.origin + "/dashboard.html"
+      mailRedirectTo: "http://localhost:3000/dashboard.html"
     }
   });
 
