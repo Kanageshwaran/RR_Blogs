@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard • RR</title>
+  <link rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand">
+      <img src="/assets/rr-icon.svg" alt="RR"/>
+      <span>Rathiri Rowdies (RR)</span>
+    </div>
+    <div class="navlinks">
+      <a href="/index.html">Home</a>
+      <a href="/admin.html" id="adminLink" style="display:none;">Admin</a>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container grid">
+    <div>
+      <div class="card">
+        <h1 class="title">Your Posts</h1>
+        <p class="meta" id="who"></p>
+      </div>
+      <div id="myPosts"></div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h2 class="title" style="font-size:18px;">Create Post</h2>
+
+        <input class="input" id="title" placeholder="Title (bold heading)"/>
+        <div style="height:10px"></div>
+        <textarea class="input" id="body" placeholder="Write your post..."></textarea>
+        <div style="height:10px"></div>
+
+        <label class="meta">Text color (restricted):</label>
+        <select class="input" id="color">
+          <option value="black">black</option>
+          <option value="red">red</option>
+          <option value="blue">blue</option>
+        </select>
+
+        <div style="height:10px"></div>
+        <button class="btn primary" id="publishBtn">Publish</button>
+        <div style="height:10px"></div>
+        <div class="meta" id="msg"></div>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Rathiri Rowdies (RR)</title>
+  <link rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand">
+      <img src="/assets/rr-icon.svg" alt="RR"/>
+      <span>Rathiri Rowdies (RR)</span>
+    </div>
+    <div class="navlinks">
+      <a href="/index.html">Home</a>
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/login.html">Login</a>
+    </div>
+  </div>
+
+  <div class="container grid">
+    <div>
+      <div class="card">
+        <h1 class="title">Latest Posts</h1>
+        <p class="meta">All posts are loaded from Supabase.</p>
+      </div>
+      <div id="feed"></div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h2 class="title" style="font-size:18px;">Share RR</h2>
+        <p class="meta">Use your device share sheet when available.</p>
+        <button class="btn" id="shareBtn">Share</button>
+      </div>
+    </aside>
+  </div>
+
+  <script type="module" src="/js/feed.js"></script>
+</body>
+</html>
